@@ -73,6 +73,25 @@ def unit_clause(clause, variables):
             return True, str(abs(int(literal))), find_sat_value(literal)  # only if all other values are defined as true
     return False, None, None
 
+def pure_literal(variable,clauses,variables):
+    """"
+    """
+    clause_indexes = variables[variable][CLAUSE_INDEX]
+    flag = UNDEFINED
+    for index in clause_indexes:
+        clause = clauses[index]
+        for lit in clause[CLAUSE]:
+            if str(abs(int(lit))) == variable:
+                if flag == UNDEFINED:
+                    flag = int(lit)>0
+                elif flag == (int(lit)>0):
+                    pass
+                else:
+                    return False
+                break
+
+    return True
+
 
 def find_sat_value(literal):
     "finds the value that will satisfy the clause"
@@ -234,21 +253,8 @@ def SAT_solver(variables, clauses, version=PT):
 
 
 
-# variables = {"111": {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None},
-#              "112": {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None}}
-# clauses = {0:{CLAUSE: ["-111", "-112"], BOOL: False,LITERALS:['111','112']}, 1:{CLAUSE: ["111", "112"], BOOL: False,LITERALS:['111','112']},
-#            2:{CLAUSE: ["111", "-112"], BOOL: False,LITERALS:['111','112']}, 3:{CLAUSE: ["-111", "112"], BOOL: False,LITERALS:['111','112']}}
-# SAT_solver(variables, clauses)
-#
-# variables = {"111": {CLAUSE_INDEX: [0, 1], BOOL: UNDEFINED, UNIT_CLAUSE: None},
-#              "112": {CLAUSE_INDEX: [0, 1], BOOL: UNDEFINED, UNIT_CLAUSE: None}}
-# clauses = {0:{CLAUSE: ["-111", "-112"], BOOL: False,LITERALS:['111','112']}, 1:{CLAUSE: ["111", "112"], BOOL: False,LITERALS:['111','112']}}
-#
-# SAT_solver(variables, clauses)
-# variables = {"111": {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None},
-#              "112": {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None},
-#              "113": {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None},
-#              "114": {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None}}
-# clauses = {0:{CLAUSE: ["-111", "-112"], BOOL: False,LITERALS:['111','112']}, 1:{CLAUSE: ["111", "112"], BOOL: False,LITERALS:['111','112']},
-#            2:{CLAUSE: ["111", "-112"], BOOL: False,LITERALS:['111','112']}, 3:{CLAUSE: ["-111", "112",'113'], BOOL: False,LITERALS:['111','112','113']}}
-# SAT_solver(variables, clauses)
+variables = {"111": {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None},
+             "112": {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None}}
+clauses = {0:{CLAUSE: ["111", "-112"], BOOL: False,LITERALS:['111','112']}, 1:{CLAUSE: ["111", "-112"], BOOL: False,LITERALS:['111','112']},
+           2:{CLAUSE: ["111", "-112"], BOOL: False,LITERALS:['111','112']}, 3:{CLAUSE: ["111", "-112"], BOOL: False,LITERALS:['111','112']}}
+print(pure_literal('112',clauses, variables))
