@@ -38,7 +38,7 @@ def unit_clause(clause, data_pack):
 
 
 def evaluate_literal(literal, data_pack):
-    "evaluates a literal"
+    """ evaluates a literal"""
     var = abs(literal)
     variables = data_pack[VARIABLES]
     if variables[var][BOOL] == UNDEFINED:
@@ -51,10 +51,6 @@ def evaluate_literal(literal, data_pack):
 
 def evaluate_clause(clause, data_pack):
     """
-
-    :param clause:
-    :param variables:
-    :return: if the clause is false/true
     """
     truths = []
     inconsistent = INCONSISTENT
@@ -105,16 +101,16 @@ def find_conflict(clause_key, data_pack):
             partial_clause.remove(-var)
 
 
-    print([var for var in partial_clause])
-    print([f"{abs(var)}:{data_pack[VARIABLES][abs(var)][BOOL]}" for var in partial_clause])
+    # print([var for var in partial_clause])
+    # print([f"{abs(var)}:{data_pack[VARIABLES][abs(var)][BOOL]}" for var in partial_clause])
 
     partial_clause = {CLAUSE: partial_clause, BOOL: False, TAUTOLOGY: False,
                       LITERALS: [abs(var) for var in partial_clause]}
 
-    ev,_ = evaluate_clause(partial_clause,data_pack)
+    ev, _ = evaluate_clause(partial_clause,data_pack)
     if ev:
-        print("evaluated to true")
-
+        # print("evaluated to true")
+        pass
 
 
     dpc = data_pack[CLAUSES]
@@ -198,9 +194,11 @@ def recursive_cdcl(data_pack, depth=0):
             data_pack[SPLITS].append(key)
 
             var[BOOL] = bool(random.getrandbits(1))
-            print(depth)
-            data_pack[SAT_SPLITS] = data_pack[SAT_SPLITS]+1
+            # print(depth)
+            data_pack[SAT_SPLITS] = data_pack[SAT_SPLITS] + 1
+
             success, backtrack = recursive_cdcl(data_pack, depth + 1)
+
             if success is INCONSISTENT:
                 data_pack[SPLITS].remove(key)
                 var[BOOL] = UNDEFINED
@@ -220,7 +218,7 @@ def cdcl(clauses, variables):
                  IMPLICATIONS: {}, SPLITS: [],SAT_SPLITS:0}
     success= recursive_cdcl(data_pack)[0]
     print("cdcl splits:", data_pack[SAT_SPLITS])
-    return success
+    return success, data_pack[SAT_SPLITS]
 #
 # variables = {111: {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None},
 #              112: {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None}}

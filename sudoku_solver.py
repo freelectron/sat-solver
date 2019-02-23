@@ -21,7 +21,7 @@ def parse_sudoku_to_dimacs(sudoku,output=False):
             col_idx = idx%9+1
             num = int(char)
             clauses+= f"{row_idx}{col_idx}{num} 0\n"
-    if output:print_sudoku(clauses)
+    if output: print_sudoku(clauses)
 
     return clauses
 
@@ -49,26 +49,14 @@ def test_func():
     rules = "\n".join(rules.read().split("\n")[1:])
     sudoku = open("testsudoku.txt")
     for line in sudoku.read().split("\n"):
-        if not line:continue
-        sudoku_dimacs = parse_sudoku_to_dimacs(line,True)
-
-        # variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        # final = SAT_solver(variables, clauses,0)
-        # print_sudoku(final)
+        if not line: continue
+        sudoku_dimacs = parse_sudoku_to_dimacs(line, False)
 
         variables, clauses = dimacs_to_datastructures(rules+sudoku_dimacs)
-        final = SAT_solver(variables, clauses,1)
-        print_sudoku(final)
-
-
-
-
+        final, splits, list_sat_clauses = SAT_solver(variables, clauses, 0, moms=True)
+        variables, clauses = dimacs_to_datastructures(rules+sudoku_dimacs)
+        final, splits, list_sat_clauses = SAT_solver(variables, clauses, 0, moms=False)
+        print()
+        # print_sudoku(final)
 
 test_func()
-# dimacs = create_sudoku()
-# variables, clauses = dimacs_to_datastructures(dimacs)
-#
-# final = SAT_solver(variables,clauses)
-# print_sudoku(final)
-# import timeit
-# print(timeit.timeit(lambda: SAT_solver(variables,clauses), number=10))

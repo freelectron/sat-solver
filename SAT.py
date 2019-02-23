@@ -82,7 +82,6 @@ def evaluate_literal(literal, variables):
 
 def evaluate_clause(clause, variables):
     """
-
     :param clause:
     :param variables:
     :return: if the clause is false/true
@@ -107,7 +106,6 @@ def check_clauses_validity(clauses):
 
 def resolve_clause(clause_key, clauses, variables, changed_literals):
     """
-
     Sees if a clause can be resolved, or is a unit clause.
     :param clause_key:
     :param clauses:
@@ -133,11 +131,11 @@ def resolve_clause(clause_key, clauses, variables, changed_literals):
             changed_literals.append(var)
             incon, removed_clause = resolve_unit_literals(var, clauses, variables, changed_literals)
             return incon, removed_clause
-    return inconsistent,{}
+    return inconsistent, {}
 
 
 def resolve_unit_literals(literal, clauses, variables, changed_literals):
-    "resolves an unit becoming a literal, cross removes clauses and removes corrosponding indexes"
+    """ resolves an unit becoming a literal, cross removes clauses and removes corrosponding indexes """
     clause_keys = variables[literal][CLAUSE_INDEX]
     removed_clauses = {}
     for k in list(clause_keys):
@@ -148,7 +146,7 @@ def resolve_unit_literals(literal, clauses, variables, changed_literals):
     return False, removed_clauses
 
 
-def undo_clause_deletion(removed_clauses,changed_literals, clauses, variables):
+def undo_clause_deletion(removed_clauses, changed_literals, clauses, variables):
     for k, c in removed_clauses.items():
         clauses[k] = c
         for l in c[LITERALS]:
@@ -156,7 +154,13 @@ def undo_clause_deletion(removed_clauses,changed_literals, clauses, variables):
     for cl in changed_literals:
         variables[cl][BOOL] = UNDEFINED
 
-def recursive_SAT_solver(clauses, variables,depth=0):
+
+def check_sat_clauses(clauses):
+    sat_clauses = global_len_clauses - len(clauses.items())
+    return sat_clauses
+
+
+def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
     """
     All changed literals and clauses will be stored
     :param clauses:
@@ -167,57 +171,92 @@ def recursive_SAT_solver(clauses, variables,depth=0):
     changed_literals = []
     removed_clauses = {}
     #first try to solve for all variabeles, if all is satisfied we don't need to make splits
-    for k,clause in list(clauses.items()):
-        if not k in clauses:continue#we are changing the list while running
-        inconsistent,r_c= resolve_clause(k, clauses, variables, changed_literals)
-        removed_clauses = {**removed_clauses,**r_c}
+    for k, clause in list(clauses.items()):
+        if not k in clauses: continue #we are changing the list while running
+        inconsistent, r_c = resolve_clause(k, clauses, variables, changed_literals)
+        removed_clauses = {**removed_clauses, **r_c}
         if inconsistent:
-            undo_clause_deletion(removed_clauses,changed_literals,clauses,variables)
+            undo_clause_deletion(removed_clauses, changed_literals, clauses, variables)
             return INCONSISTENT
 
-    if len(clauses)==0:
+    if len(clauses) == 0:
         return True
 
-    #We need to make a split
-    for k in variables.keys():
-        if variables[k][BOOL] == UNDEFINED:
-            changed_literals.append(k)
-            for b in [False,True]:
-                global global_sat_splits
-                global_sat_splits.append(1)
-                variables[k][BOOL] = b
-                # print(depth)
-                success = recursive_SAT_solver(clauses,variables,depth+1)
-                if success is INCONSISTENT:
-                    continue
-                else:
-                    return True
-            # noinspection PyUnreachableCode
-            undo_clause_deletion(removed_clauses,changed_literals,clauses,variables)
-            return INCONSISTENT
+    if not moms:
+        # We need to make a split
+        for k in variables.keys():
+            if variables[k][BOOL] == UNDEFINED:
+                changed_literals.append(k)
+                for b in [False, True]:
+                    global global_sat_splits
+                    global_sat_splits.append(1)
+                    variables[k][BOOL] = b
+                    # print(depth)
+                    global global_sat_clauses
+                    global_sat_clauses.append(check_sat_clauses(clauses))
+
+                    success = recursive_SAT_solver(clauses, variables, depth+1)
+                    if success is INCONSISTENT:
+                        continue
+                    else:
+                        return True
+                # noinspection PyUnreachableCode
+                undo_clause_deletion(removed_clauses, changed_literals, clauses, variables)
+                return INCONSISTENT
+    else:
+        # We need to make a split based on moms heuristic
+        moms_variables = variables.keys()
+        moms_variables = dict(reversed(sorted(variables.items(), key=lambda kv:len(kv[1]['unsat_clauses']))))
+        for k in moms_variables: # variables.keys():
+            if variables[k][BOOL] == UNDEFINED:
+                changed_literals.append(k)
+                for b in [False, True]:
+                    # global global_sat_splits
+                    global_sat_splits.append(1)
+                    variables[k][BOOL] = b
+                    # print(depth)
+                    # global global_sat_clauses
+                    global_sat_clauses.append(check_sat_clauses(clauses))
+
+                    success = recursive_SAT_solver(clauses, variables, depth + 1, moms=moms)
+                    if success is INCONSISTENT:
+                        continue
+                    else:
+                        return True
+                # noinspection PyUnreachableCode
+                undo_clause_deletion(removed_clauses, changed_literals, clauses, variables)
+                return INCONSISTENT
 
     undo_clause_deletion(removed_clauses, changed_literals, clauses, variables)
     return INCONSISTENT
 
-
-def SAT_solver(variables, clauses, version=PT):
-    # first check for tautologys
+def SAT_solver(variables, clauses, version=PT, moms=False):
+    # first check for tautologies
     for k, c in list(clauses.items()):
         if tautology(c):
             c[TAUTOLOGY] = True
             c[BOOL] = True
-            resolve_clause(k, clauses, variables,[])
+            resolve_clause(k, clauses, variables, [])
     correct = False
 
+    # global variables init
     global global_sat_splits
     global_sat_splits = []
+    global global_len_clauses
+    global_len_clauses = len(clauses.items())
+    global global_sat_clauses
+    global_sat_clauses = []
+    global_sat_clauses.append(global_len_clauses)
+
     if version is PT or version is 0:
-        correct = recursive_SAT_solver(clauses, variables)
+        correct = recursive_SAT_solver(clauses, variables, moms=moms)
         print("sat splits:", len(global_sat_splits))
+        print('# of clauses satisfied per split: ', len(global_sat_clauses))
 
     elif version is 1:
-        success = cdcl(clauses,variables)
-    #determines if it is inconsistent
+        success, splits = cdcl(clauses, variables)
+
+    # determines if it is inconsistent
     if correct is INCONSISTENT:
         print("awwh inconsistent")
     else:
@@ -226,8 +265,17 @@ def SAT_solver(variables, clauses, version=PT):
     t = ""
     for k, v in variables.items():
         if v[BOOL]:
-            t+=f"{k} 0\n"
-    return t
+            t += f"{k} 0\n"
+
+
+    # see what the
+    splits = None
+    splits = splits or global_sat_splits
+    list_sat_clauses = None
+    # TODO: implement list_sat_clauses for cdcl
+    list_sat_clauses = list_sat_clauses or global_sat_clauses
+
+    return t, splits, list_sat_clauses
 
 
 
