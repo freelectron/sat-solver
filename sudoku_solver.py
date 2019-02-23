@@ -53,9 +53,9 @@ def test_func():
         sudoku_dimacs = parse_sudoku_to_dimacs(line, False)
 
         variables, clauses = dimacs_to_datastructures(rules+sudoku_dimacs)
-        final, splits, list_sat_clauses = SAT_solver(variables, clauses, 0, moms=True)
+        final, splits, list_sat_clauses = SAT_solver(variables, clauses, 1, moms=True)
         variables, clauses = dimacs_to_datastructures(rules+sudoku_dimacs)
-        final, splits, list_sat_clauses = SAT_solver(variables, clauses, 0, moms=False)
+        final, splits, list_sat_clauses = SAT_solver(variables, clauses, 1, moms=False)
         print()
         # print_sudoku(final)
 

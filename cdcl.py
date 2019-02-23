@@ -174,7 +174,7 @@ def undo_clause_deletion(changed_literals, removed_clauses, data_pack):
         data_pack[VARIABLES][lit][BOOL] = UNDEFINED
 
 
-def recursive_cdcl(data_pack, depth=0):
+def recursive_cdcl(data_pack, depth=0, moms=False):
     changed_literals = []
     removed_clauses = {}
     for clause_key, clause in list(data_pack[UNSAT_CLAUSES].items()):
@@ -188,35 +188,58 @@ def recursive_cdcl(data_pack, depth=0):
     if len(data_pack[UNSAT_CLAUSES]) == 0:
         return True, None
 
-    for key, var in data_pack[VARIABLES].items():
-        if var[BOOL] == UNDEFINED:
-            backtrack = None
-            data_pack[SPLITS].append(key)
+    # Make the split
+    if not moms:
+        for key, var in data_pack[VARIABLES].items():
+            if var[BOOL] == UNDEFINED:
+                backtrack = None
+                data_pack[SPLITS].append(key)
 
-            var[BOOL] = bool(random.getrandbits(1))
-            # print(depth)
-            data_pack[SAT_SPLITS] = data_pack[SAT_SPLITS] + 1
+                var[BOOL] = bool(random.getrandbits(1))
+                # print(depth)
+                data_pack[SAT_SPLITS] = data_pack[SAT_SPLITS] + 1
 
-            success, backtrack = recursive_cdcl(data_pack, depth + 1)
+                success, backtrack = recursive_cdcl(data_pack, depth + 1, moms=moms)
 
-            if success is INCONSISTENT:
-                data_pack[SPLITS].remove(key)
-                var[BOOL] = UNDEFINED
-                undo_clause_deletion(changed_literals, removed_clauses, data_pack)
-                if key == backtrack:
-                    return recursive_cdcl(data_pack, depth)
-                return INCONSISTENT, backtrack
-            else:
-                return True, None
+                if success is INCONSISTENT:
+                    data_pack[SPLITS].remove(key)
+                    var[BOOL] = UNDEFINED
+                    undo_clause_deletion(changed_literals, removed_clauses, data_pack)
+                    if key == backtrack:
+                        return recursive_cdcl(data_pack, depth)
+                    return INCONSISTENT, backtrack
+                else:
+                    return True, None
+    else:
+        moms_variables = reversed(sorted(data_pack[VARIABLES].items(), key=lambda kv: len(kv[1]['unsat_clauses'])))
+        for key, var in moms_variables:
+            if var[BOOL] == UNDEFINED:
+                backtrack = None
+                data_pack[SPLITS].append(key)
 
+                var[BOOL] = bool(random.getrandbits(1))
+                # print(depth)
+                data_pack[SAT_SPLITS] = data_pack[SAT_SPLITS] + 1
 
-def cdcl(clauses, variables):
+                success, backtrack = recursive_cdcl(data_pack, depth + 1)
+
+                if success is INCONSISTENT:
+                    data_pack[SPLITS].remove(key)
+                    var[BOOL] = UNDEFINED
+                    undo_clause_deletion(changed_literals, removed_clauses, data_pack)
+                    if key == backtrack:
+                        return recursive_cdcl(data_pack, depth)
+                    return INCONSISTENT, backtrack
+                else:
+                    return True, None
+
+def cdcl(clauses, variables, moms=False):
     """
     #base function
     """
     data_pack = {CLAUSES: clauses, VARIABLES: variables, UNSAT_VARIABLES: set(VARIABLES), UNSAT_CLAUSES: dict(clauses),
                  IMPLICATIONS: {}, SPLITS: [],SAT_SPLITS:0}
-    success= recursive_cdcl(data_pack)[0]
+    success= recursive_cdcl(data_pack, moms=moms)[0]
     print("cdcl splits:", data_pack[SAT_SPLITS])
     return success, data_pack[SAT_SPLITS]
 #

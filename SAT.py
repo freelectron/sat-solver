@@ -205,8 +205,7 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
                 return INCONSISTENT
     else:
         # We need to make a split based on moms heuristic
-        moms_variables = variables.keys()
-        moms_variables = dict(reversed(sorted(variables.items(), key=lambda kv:len(kv[1]['unsat_clauses']))))
+        moms_variables = reversed(sorted(variables.items(), key=lambda kv:len(kv[1]['unsat_clauses'])))
         for k in moms_variables: # variables.keys():
             if variables[k][BOOL] == UNDEFINED:
                 changed_literals.append(k)
@@ -254,7 +253,7 @@ def SAT_solver(variables, clauses, version=PT, moms=False):
         print('# of clauses satisfied per split: ', len(global_sat_clauses))
 
     elif version is 1:
-        success, splits = cdcl(clauses, variables)
+        success, splits = cdcl(clauses, variables,moms=moms)
 
     # determines if it is inconsistent
     if correct is INCONSISTENT:
@@ -266,7 +265,6 @@ def SAT_solver(variables, clauses, version=PT, moms=False):
     for k, v in variables.items():
         if v[BOOL]:
             t += f"{k} 0\n"
-
 
     # see what the
     splits = None
