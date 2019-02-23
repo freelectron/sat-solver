@@ -187,7 +187,7 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
         for k in variables.keys():
             if variables[k][BOOL] == UNDEFINED:
                 changed_literals.append(k)
-                for b in [False, True]:
+                for b in [True, False]:
                     global global_sat_splits
                     global_sat_splits.append(1)
                     variables[k][BOOL] = b
@@ -205,11 +205,11 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
                 return INCONSISTENT
     else:
         # We need to make a split based on moms heuristic
-        moms_variables = reversed(sorted(variables.items(), key=lambda kv:len(kv[1]['unsat_clauses'])))
-        for k in moms_variables: # variables.keys():
+        moms_variables = reversed(sorted(variables.items(), key=lambda kv:len(kv[1][CLAUSE_INDEX])))
+        for k,var in moms_variables: # variables.keys():
             if variables[k][BOOL] == UNDEFINED:
                 changed_literals.append(k)
-                for b in [False, True]:
+                for b in [True, False]:
                     # global global_sat_splits
                     global_sat_splits.append(1)
                     variables[k][BOOL] = b
