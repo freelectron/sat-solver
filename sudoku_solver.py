@@ -9,11 +9,11 @@ def create_sudoku(sudokuname="testsudoku.txt"):
 
     full_dimacs = rules + sudoku_dimacs
     nl = '\n'
-    full_dimacs = f"p cnf 999 {full_dimacs.count(nl)}\n" +full_dimacs
+    full_dimacs = f"p cnf 999 {full_dimacs.count(nl)}\n" + full_dimacs
     return full_dimacs
 
 
-def parse_sudoku_to_dimacs(sudoku,output=False):
+def parse_sudoku_to_dimacs(sudoku, output=False):
     clauses = ""
     for idx,char in enumerate(sudoku):
         if ord(char)>48 and ord(char)<=57:
@@ -28,10 +28,10 @@ def parse_sudoku_to_dimacs(sudoku,output=False):
 
 def print_sudoku(dimacs):
     #to dict
-    d = {int(int(s)/10):int(s)%10 for s in dimacs.split() if s.isdigit()}
+    d = {int(int(s)/10): int(s)%10 for s in dimacs.split() if s.isdigit()}
     image = "-"*31+"\n"
     for row in range(1,10):
-        #rows with
+        # rows with
         for col in range(1,10):
             if (col-1) % 3 == 0: image += '|'
             if row*10+col in d:
@@ -44,19 +44,62 @@ def print_sudoku(dimacs):
     print(image)
 
 
-def test_func():
+def test_func(data_name="testsudoku"):
     rules = open("sudoku-rules.txt")
     rules = "\n".join(rules.read().split("\n")[1:])
-    sudoku = open("testsudoku.txt")
+    sudoku = open(data_name+".txt")
+    import pandas as pd
+
+    DP_splits_list = list()
+    DP_list_sat_clauses_list = list()
+    DP_moms_splits_list  = list()
+    DP_moms_list_sat_clauses_list = list()
+    cdcl_splits_list = list()
+    cdcl_list_sat_clauses_list = list()
+    cdcl_moms_splits_list = list()
+    cdcl_moms_list_sat_clauses_list = list()
+
+    sudoku_clauses_list = list()
+
+    c = 0
     for line in sudoku.read().split("\n"):
         if not line: continue
+        c+=1
         sudoku_dimacs = parse_sudoku_to_dimacs(line, False)
+        variables, clauses = dimacs_to_datastructures(rules+sudoku_dimacs)
+
+        DP_correct, DP_final, DP_splits, DP_list_sat_clauses = \
+            SAT_solver(variables, clauses, 0, moms=False)
 
         variables, clauses = dimacs_to_datastructures(rules+sudoku_dimacs)
-        final, splits, list_sat_clauses = SAT_solver(variables, clauses, 1, moms=False)
-        variables, clauses = dimacs_to_datastructures(rules+sudoku_dimacs)
-        final, splits, list_sat_clauses = SAT_solver(variables, clauses, 1, moms=True)
-        print()
+        DP_moms_correct, DP_moms_final, DP_moms_splits, DP_moms_list_sat_clauses = \
+                        SAT_solver(variables, clauses, 0, moms=True)
+
+
+        variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
+        cdcl_correct, cdcl_final, cdcl_splits, cdcl_list_sat_clauses =\
+                        SAT_solver(variables, clauses, 1, moms=False)
+
+        variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
+        cdcl_moms_correct, cdcl_moms_final, cdcl_moms_splits, cdcl_moms_list_sat_clauses = \
+                        SAT_solver(variables, clauses, 1, moms=True)
+
+        DP_splits_list.append(len(DP_splits))
+        DP_moms_splits_list.append(len(DP_moms_splits))
+        cdcl_splits_list.append(cdcl_splits)
+        cdcl_moms_splits_list.append(cdcl_moms_splits)
+
+        sudoku_clauses_list.append(len(sudoku_dimacs.split('\n'))-1)
+
         # print_sudoku(final)
+        if c>10:
+            break
+        # print()
+
+    data = {'DP_splits':DP_splits_list, 'DP_moms_splits':DP_moms_splits_list, 'cdcl_splits':cdcl_splits_list,
+            'cdcl_moms_splits': cdcl_moms_splits_list, 'sudoku_given_clauses': sudoku_clauses_list}
+
+    df_9by9 = pd.DataFrame(data=data)
+    df_9by9.to_csv(data_name+'_9x9.csv')
 
 test_func()

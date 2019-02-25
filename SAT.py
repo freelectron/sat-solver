@@ -163,10 +163,6 @@ def check_sat_clauses(clauses):
 def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
     """
     All changed literals and clauses will be stored
-    :param clauses:
-    :param variables:
-    :param depth:
-    :return:
     """
     changed_literals = []
     removed_clauses = {}
@@ -205,8 +201,8 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
                 return INCONSISTENT
     else:
         # We need to make a split based on moms heuristic
-        moms_variables = reversed(sorted(variables.items(), key=lambda kv:len(kv[1][CLAUSE_INDEX])))
-        for k,var in moms_variables: # variables.keys():
+        moms_variables = dict(sorted(variables.items(), key=lambda kv: len(kv[1][CLAUSE_INDEX])))
+        for k in moms_variables.keys():  # variables.keys():
             if variables[k][BOOL] == UNDEFINED:
                 changed_literals.append(k)
                 for b in [True, False]:
@@ -230,6 +226,7 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
     return INCONSISTENT
 
 def SAT_solver(variables, clauses, version=PT, moms=False):
+    """ """
     # first check for tautologies
     for k, c in list(clauses.items()):
         if tautology(c):
@@ -238,7 +235,7 @@ def SAT_solver(variables, clauses, version=PT, moms=False):
             resolve_clause(k, clauses, variables, [])
     correct = False
 
-    # global variables init
+    # Global variables init
     global global_sat_splits
     global_sat_splits = []
     global global_len_clauses
@@ -247,33 +244,36 @@ def SAT_solver(variables, clauses, version=PT, moms=False):
     global_sat_clauses = []
     global_sat_clauses.append(global_len_clauses)
 
+    # Init variables that will store the output
+    splits = None
+
+    list_sat_clauses = None
+
     if version is PT or version is 0:
         correct = recursive_SAT_solver(clauses, variables, moms=moms)
-        print("sat splits:", len(global_sat_splits))
-        print('# of clauses satisfied per split: ', len(global_sat_clauses))
+        # print("sat splits:", len(global_sat_splits))
+        # print('# of clauses satisfied per split: ', len(global_sat_clauses))
 
     elif version is 1:
-        success, splits = cdcl(clauses, variables,moms=moms)
+        success, splits = cdcl(clauses, variables, moms=moms)
 
-    # determines if it is inconsistent
-    if correct is INCONSISTENT:
-        print("awwh inconsistent")
-    else:
-        print("hurray")
+    # # determines if it is inconsistent
+    # if correct is INCONSISTENT:
+    #     # print("awwh inconsistent")
+    # else:
+    #     # print("hurray")
 
     t = ""
     for k, v in variables.items():
         if v[BOOL]:
             t += f"{k} 0\n"
 
-    # see what the
-    splits = None
     splits = splits or global_sat_splits
-    list_sat_clauses = None
-    # TODO: implement list_sat_clauses for cdcl
+    # TODO: implement global_sat_clauses for cdcl
     list_sat_clauses = list_sat_clauses or global_sat_clauses
 
-    return t, splits, list_sat_clauses
+
+    return correct, t, splits, list_sat_clauses
 
 
 
