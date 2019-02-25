@@ -223,8 +223,8 @@ def recursive_cdcl(data_pack, depth=0, moms=False):
 	            undo_clause_deletion(changed_literals, removed_clauses, data_pack)
 	            return INCONSISTENT, backtrack
     else:
-        moms_variables = dict(reversed(sorted(data_pack[VARIABLES].items(), key=lambda kv: len(kv[1]['unsat_clauses']))))
-        for key in moms_variables.keys():
+        moms_variables = reversed(sorted(data_pack[VARIABLES].items(), key=lambda kv: len(kv[1]['unsat_clauses'])))
+        for key,_ in moms_variables:
             var = data_pack[VARIABLES][key]
             if var[BOOL] == UNDEFINED:
                 backtrack = None

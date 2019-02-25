@@ -70,16 +70,16 @@ def test_func(data_name="testsudoku"):
 
         DP_correct, DP_final, DP_splits, DP_list_sat_clauses = \
             SAT_solver(variables, clauses, 0, moms=False)
-
-        variables, clauses = dimacs_to_datastructures(rules+sudoku_dimacs)
+=        variables, clauses = dimacs_to_datastructures(rules+sudoku_dimacs)
         DP_moms_correct, DP_moms_final, DP_moms_splits, DP_moms_list_sat_clauses = \
                         SAT_solver(variables, clauses, 0, moms=True)
+
+
 
 
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
         cdcl_correct, cdcl_final, cdcl_splits, cdcl_list_sat_clauses =\
                         SAT_solver(variables, clauses, 1, moms=False)
-        print_sudoku(cdcl_final)
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
         cdcl_moms_correct, cdcl_moms_final, cdcl_moms_splits, cdcl_moms_list_sat_clauses = \
                         SAT_solver(variables, clauses, 1, moms=True)

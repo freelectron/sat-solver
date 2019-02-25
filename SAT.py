@@ -201,8 +201,8 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
                 return INCONSISTENT
     else:
         # We need to make a split based on moms heuristic
-        moms_variables = dict(sorted(variables.items(), key=lambda kv: len(kv[1][CLAUSE_INDEX])))
-        for k in moms_variables.keys():  # variables.keys():
+        moms_variables = sorted(variables.items(), key=lambda kv: len(kv[1][CLAUSE_INDEX]))
+        for k,_ in moms_variables:  # variables.keys():
             if variables[k][BOOL] == UNDEFINED:
                 changed_literals.append(k)
                 for b in [True, False]:
