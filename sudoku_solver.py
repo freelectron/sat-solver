@@ -70,16 +70,15 @@ def test_func(data_name="testsudoku"):
 
         DP_correct, DP_final, DP_splits, DP_list_sat_clauses = \
             SAT_solver(variables, clauses, 0, moms=False)
-=        variables, clauses = dimacs_to_datastructures(rules+sudoku_dimacs)
+
+        variables, clauses = dimacs_to_datastructures(rules+sudoku_dimacs)
         DP_moms_correct, DP_moms_final, DP_moms_splits, DP_moms_list_sat_clauses = \
                         SAT_solver(variables, clauses, 0, moms=True)
-
-
-
 
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
         cdcl_correct, cdcl_final, cdcl_splits, cdcl_list_sat_clauses =\
                         SAT_solver(variables, clauses, 1, moms=False)
+
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
         cdcl_moms_correct, cdcl_moms_final, cdcl_moms_splits, cdcl_moms_list_sat_clauses = \
                         SAT_solver(variables, clauses, 1, moms=True)
@@ -89,15 +88,24 @@ def test_func(data_name="testsudoku"):
         cdcl_splits_list.append(cdcl_splits)
         cdcl_moms_splits_list.append(cdcl_moms_splits)
 
+        DP_list_sat_clauses_list.append(DP_list_sat_clauses)
+        DP_moms_list_sat_clauses_list.append(DP_moms_list_sat_clauses)
+        cdcl_list_sat_clauses_list.append(cdcl_list_sat_clauses)
+        cdcl_moms_list_sat_clauses_list.append(cdcl_moms_list_sat_clauses)
+
         sudoku_clauses_list.append(len(sudoku_dimacs.split('\n'))-1)
 
-        # print_sudoku(final)
+        #TODO: make cdcl_notchronological and moms
+
         if c>10:
             break
-        # print()
 
     data = {'DP_splits':DP_splits_list, 'DP_moms_splits':DP_moms_splits_list, 'cdcl_splits':cdcl_splits_list,
-            'cdcl_moms_splits': cdcl_moms_splits_list, 'sudoku_given_clauses': sudoku_clauses_list}
+            'cdcl_moms_splits': cdcl_moms_splits_list, 'sudoku_given_clauses': sudoku_clauses_list,
+            'DP_list_sat_clauses':DP_list_sat_clauses_list,
+            'DP_moms_list_sat_clauses':DP_moms_list_sat_clauses_list,
+            'cdcl_list_sat_clauses': cdcl_list_sat_clauses_list,
+            'cdcl_moms_list_sat_clauses': cdcl_moms_list_sat_clauses_list}
 
     df_9by9 = pd.DataFrame(data=data)
     df_9by9.to_csv(data_name+'_9x9.csv')
