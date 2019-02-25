@@ -174,21 +174,23 @@ def undo_clause_deletion(changed_literals, removed_clauses, data_pack):
         data_pack[VARIABLES][lit][BOOL] = UNDEFINED
 
 
-def check_sat_clauses(clauses):
-    sat_clauses = global_len_clauses - len(clauses.items())
-    return sat_clauses
 
 def recursive_cdcl(data_pack, depth=0, moms=False):
     changed_literals = []
     removed_clauses = {}
+    
+    global global_sat_clauses
+    
     for clause_key, clause in list(data_pack[UNSAT_CLAUSES].items()):
         if not clause_key in data_pack[UNSAT_CLAUSES]:
             continue
         inconsistent, backtrack = check_clause(clause_key, changed_literals, removed_clauses, data_pack)
         if inconsistent is INCONSISTENT:
+            global_sat_clauses.append(len(removed_clauses))
             undo_clause_deletion(changed_literals, removed_clauses, data_pack)
             return INCONSISTENT, backtrack
 
+    global_sat_clauses.append(len(removed_clauses))
     if len(data_pack[UNSAT_CLAUSES]) == 0:
         return True, None
 
@@ -204,8 +206,7 @@ def recursive_cdcl(data_pack, depth=0, moms=False):
                         data_pack[SAT_SPLITS] = data_pack[SAT_SPLITS] + 1
 
                         # number of removed clauses = number of satisfied clauses ?
-                        global global_sat_clauses
-                        global_sat_clauses.append(check_sat_clauses(data_pack[UNSAT_CLAUSES]))
+                      
 
                         success, backtrack = recursive_cdcl(data_pack, depth + 1)
 
@@ -240,8 +241,6 @@ def recursive_cdcl(data_pack, depth=0, moms=False):
                     data_pack[SAT_SPLITS] = data_pack[SAT_SPLITS]+1
 
                     # number of removed clauses = number of satisfied clauses ?
-                    global_sat_clauses.append(check_sat_clauses(data_pack[UNSAT_CLAUSES]))
-
                     success, backtrack = recursive_cdcl(data_pack, depth + 1)
 
                     if success is INCONSISTENT:
@@ -264,12 +263,13 @@ def cdcl(clauses, variables, moms=False):
     #base function
     """
     # init global variables
-    global global_len_clauses
-    global_len_clauses = len(clauses.items())
+    # global global_len_clauses
+    # global_len_clauses = len(clauses.items())
+    # global global_sat_clauses
+    # global_sat_clauses = []
+    # global_sat_clauses.append(global_len_clauses)
     global global_sat_clauses
     global_sat_clauses = []
-    global_sat_clauses.append(global_len_clauses)
-
     data_pack = {CLAUSES: clauses, VARIABLES: variables, UNSAT_VARIABLES: set(VARIABLES), UNSAT_CLAUSES: dict(clauses),
                  IMPLICATIONS: {}, SPLITS: [], SAT_SPLITS:0}
     success = recursive_cdcl(data_pack, moms=moms)[0]

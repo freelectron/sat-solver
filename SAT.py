@@ -171,10 +171,13 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
         if not k in clauses: continue #we are changing the list while running
         inconsistent, r_c = resolve_clause(k, clauses, variables, changed_literals)
         removed_clauses = {**removed_clauses, **r_c}
+
         if inconsistent:
+            global_sat_clauses.append(len(removed_clauses))
             undo_clause_deletion(removed_clauses, changed_literals, clauses, variables)
             return INCONSISTENT
 
+    global_sat_clauses.append(len(removed_clauses))
     if len(clauses) == 0:
         return True
 
@@ -188,8 +191,6 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
                     global_sat_splits.append(1)
                     variables[k][BOOL] = b
                     # print(depth)
-                    global global_sat_clauses
-                    global_sat_clauses.append(check_sat_clauses(clauses))
 
                     success = recursive_SAT_solver(clauses, variables, depth+1)
                     if success is INCONSISTENT:
@@ -202,7 +203,7 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
     else:
         # We need to make a split based on moms heuristic
         moms_variables = sorted(variables.items(), key=lambda kv: len(kv[1][CLAUSE_INDEX]))
-        for k, _ in moms_variables:  # variables.keys():
+        for k,_ in moms_variables:  # variables.keys():
             if variables[k][BOOL] == UNDEFINED:
                 changed_literals.append(k)
                 for b in [True, False]:
@@ -210,9 +211,7 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
                     global_sat_splits.append(1)
                     variables[k][BOOL] = b
                     # print(depth)
-
-                    global_sat_clauses.append(check_sat_clauses(clauses))
-
+                    # global global_sat_clauses
                     success = recursive_SAT_solver(clauses, variables, depth + 1, moms=moms)
                     if success is INCONSISTENT:
                         continue
@@ -242,10 +241,10 @@ def SAT_solver(variables, clauses, version=PT, moms=False):
     global_len_clauses = len(clauses.items())
     global global_sat_clauses
     global_sat_clauses = []
-    global_sat_clauses.append(global_len_clauses)
 
     # Init variables that will store the output
     splits = None
+
     list_sat_clauses = None
 
     if version is PT or version is 0:
@@ -254,7 +253,7 @@ def SAT_solver(variables, clauses, version=PT, moms=False):
         # print('# of clauses satisfied per split: ', len(global_sat_clauses))
 
     elif version is 1:
-        success, splits, list_sat_clauses  = cdcl(clauses, variables, moms=moms)
+        success, splits, list_sat_clauses = cdcl(clauses, variables, moms=moms)
 
     # # determines if it is inconsistent
     # if correct is INCONSISTENT:
@@ -268,7 +267,7 @@ def SAT_solver(variables, clauses, version=PT, moms=False):
             t += f"{k} 0\n"
 
     splits = splits or global_sat_splits
-    # TODO: implement global_sat_clauses for cdcl
+    
     list_sat_clauses = list_sat_clauses or global_sat_clauses
 
 
