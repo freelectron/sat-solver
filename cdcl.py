@@ -6,6 +6,8 @@ UNSAT_VARIABLES = "unsat_variables"
 IMPLICATIONS = "implications"
 UNSAT_CLAUSES = "unsat clauses"
 SPLITS = "splits"
+DEPTH = 'depth'
+import sys
 import random
 
 def find_sat_value(literal):
@@ -76,33 +78,61 @@ def find_conflict(clause_key, data_pack):
     clause = data_pack[CLAUSES][clause_key]
     implications = data_pack[IMPLICATIONS]
 
+    checked_literals= set(clause[CLAUSE])
     checked_variables = set(clause[LITERALS])
     partial_clause = set(clause[CLAUSE])
-
+    depth = data_pack[DEPTH]
 
     stack = set(checked_variables)
     while len(stack)>0:
         var = stack.pop()
+        # print("resolving",var)
+        #count the number of variabeles at the current depth still present in the clause
         if not var in implications:
             continue
-        second_clause_key = implications[var]
-        second_clause = data_pack[CLAUSES][second_clause_key][CLAUSE]
-        partial_clause= partial_clause  | second_clause
 
-        # partial_vars = set([abs(c) for c in partial_clause])
+        depth_counter = 0
+        for c in partial_clause:
+            if abs(c) in implications:
+                if implications[abs(c)][1]==depth:
+                    depth_counter+=1
+                else:
+                    pass
+                    # print("older",c)
+            elif abs(c) == data_pack[SPLITS][depth-1]:
+                depth_counter+=1
 
+        if depth_counter<=1:
+            break
+
+        second_clause_key = implications[var][0]#0 is clause key, 1 is depth
+
+        second_clause = set([c for c in data_pack[CLAUSES][second_clause_key][CLAUSE] if c not in checked_literals])
+        # print("evaluated second", evaluate_clause({CLAUSE: second_clause}, data_pack))
+        # print("evaluated", evaluate_clause({CLAUSE: resolve_clauses(partial_clause,second_clause)}, data_pack))
+        # if evaluate_clause({CLAUSE: resolve_clauses(partial_clause,second_clause)}, data_pack)[0] == True:
+            # print("???")
+
+        partial_clause = resolve_clauses(partial_clause,second_clause)
+        # print([var for var in partial_clause])
+        # print([f"{abs(var)}:{data_pack[VARIABLES][abs(var)][BOOL]}" for var in partial_clause])
+
+        checked_literals = checked_literals | partial_clause
         for var in [abs(c) for c in second_clause]:
             if not var in checked_variables:
                 stack.add(var)
                 checked_variables.add(var)
-    for var in set(partial_clause):
-        if -var in partial_clause:
-            partial_clause.remove(var)
-            partial_clause.remove(-var)
+
+    #
+    # for var in set(partial_clause):
+    #     if -var in partial_clause:
+    #         partial_clause.remove(var)
+    #         partial_clause.remove(-var)
 
 
     # print([var for var in partial_clause])
     # print([f"{abs(var)}:{data_pack[VARIABLES][abs(var)][BOOL]}" for var in partial_clause])
+    # print("evaluated", evaluate_clause({CLAUSE: partial_clause}, data_pack))
 
     partial_clause = {CLAUSE: partial_clause, BOOL: False, TAUTOLOGY: False,
                       LITERALS: [abs(var) for var in partial_clause]}
@@ -120,11 +150,24 @@ def find_conflict(clause_key, data_pack):
     for var in partial_clause[LITERALS]:
         data_pack[VARIABLES][var][CLAUSE_INDEX].append(idx)
 
-    for splits in data_pack[SPLITS]:
-        for var in partial_clause[LITERALS]:
-            if var == splits:
-                return 10000  # backtrack
-    return None
+    if data_pack['chronological']:
+        return sys.maxsize
+
+
+    #find the lowest var occuring in the clauses
+    lowest_var =data_pack[DEPTH] -1
+    for var in partial_clause[LITERALS]:
+        if lowest_var==0:
+            break
+        if var in implications:
+            if lowest_var>implications[var][1]:
+                lowest_var = implications[var][1]
+        else:
+            depth = data_pack[SPLITS].index(var)
+            if lowest_var >depth:
+                lowest_var = depth
+
+    return lowest_var
 
 
 def check_clause(clause_key, changed_literals, removed_clauses, data_pack):
@@ -146,7 +189,7 @@ def check_clause(clause_key, changed_literals, removed_clauses, data_pack):
 
     is_unit, var, val = unit_clause(clause, data_pack)
     if is_unit:
-        data_pack[IMPLICATIONS][var] = clause_key
+        data_pack[IMPLICATIONS][var] = (clause_key, data_pack[DEPTH])
         data_pack[VARIABLES][var][BOOL] = val
         changed_literals.append(var)
         del data_pack[UNSAT_CLAUSES][clause_key]
@@ -201,25 +244,26 @@ def recursive_cdcl(data_pack, depth=0, moms=False):
                     backtrack = None
                     data_pack[SPLITS].append(key)
                     for b in [True,False]:
-                        # print(depth)
+                        # print("depth",depth)
                         var[BOOL] = b
                         data_pack[SAT_SPLITS] = data_pack[SAT_SPLITS] + 1
 
                         # number of removed clauses = number of satisfied clauses ?
-                      
-
+                        data_pack[DEPTH] += 1
                         success, backtrack = recursive_cdcl(data_pack, depth + 1)
+                        data_pack[DEPTH] -= 1
 
                         if success is INCONSISTENT:
-                            if depth < backtrack:
+                            # try the next run
+                            if depth == backtrack:
                                 continue
-                            if depth == backtrack+1:
-                                recursive_cdcl(data_pack,depth+1)
 
                             data_pack[SPLITS].remove(key)
                             var[BOOL] = UNDEFINED
                             undo_clause_deletion(changed_literals, removed_clauses, data_pack)
-
+                            if depth == backtrack + 1:
+                                # we want to rerun this level
+                                return recursive_cdcl(data_pack, depth)
                             return INCONSISTENT, backtrack
                         else:
                             return True, None
@@ -241,24 +285,31 @@ def recursive_cdcl(data_pack, depth=0, moms=False):
                     data_pack[SAT_SPLITS] = data_pack[SAT_SPLITS]+1
 
                     # number of removed clauses = number of satisfied clauses ?
+                    data_pack[DEPTH]+=1
                     success, backtrack = recursive_cdcl(data_pack, depth + 1)
+                    data_pack[DEPTH]-=1
 
                     if success is INCONSISTENT:
-                        if depth < backtrack:
+                        #try the next run
+                        if depth == backtrack:
                             continue
-                        if depth == backtrack+1:
-                            recursive_cdcl(data_pack, depth+1)
+
+                        undo_clause_deletion(changed_literals, removed_clauses, data_pack)
                         data_pack[SPLITS].remove(key)
                         var[BOOL] = UNDEFINED
+                        if depth == backtrack+1:
+                            # we want to rerun this level
+                            return recursive_cdcl(data_pack, depth)
                         return INCONSISTENT, backtrack
                     else:
                         return True, None
+
                 data_pack[SPLITS].remove(key)
                 var[BOOL] = UNDEFINED
                 undo_clause_deletion(changed_literals, removed_clauses, data_pack)
                 return INCONSISTENT, backtrack
 
-def cdcl(clauses, variables, moms=False):
+def cdcl(clauses, variables, moms=False,chronological=False):
     """
     #base function
     """
@@ -271,12 +322,12 @@ def cdcl(clauses, variables, moms=False):
     global global_sat_clauses
     global_sat_clauses = []
     data_pack = {CLAUSES: clauses, VARIABLES: variables, UNSAT_VARIABLES: set(VARIABLES), UNSAT_CLAUSES: dict(clauses),
-                 IMPLICATIONS: {}, SPLITS: [], SAT_SPLITS:0}
+                 IMPLICATIONS: {}, SPLITS: [], SAT_SPLITS:0,'chronological':chronological, "depth":0}
     success = recursive_cdcl(data_pack, moms=moms)[0]
 
     # print("cdcl splits:", data_pack[SAT_SPLITS])
     return success, data_pack[SAT_SPLITS], global_sat_clauses
-#
+
 # variables = {111: {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None},
 #              112: {CLAUSE_INDEX: [0, 1, 2, 3], BOOL: UNDEFINED, UNIT_CLAUSE: None}}
 # clauses = {0: {CLAUSE: set([-111, -112]), BOOL: False, LITERALS: [111, 112]},
@@ -284,7 +335,7 @@ def cdcl(clauses, variables, moms=False):
 #            2: {CLAUSE: set([111, -112]), BOOL: False, LITERALS: [111, 112]},
 #            3: {CLAUSE: set([-111, 112]), BOOL: False, LITERALS: [111, 112]}}
 # print(cdcl(clauses, variables))
-
+#
 # variables = {111: {CLAUSE_INDEX: [0, 1], BOOL: UNDEFINED, UNIT_CLAUSE: None},
 #              112: {CLAUSE_INDEX: [0, 1], BOOL: UNDEFINED, UNIT_CLAUSE: None}}
 # clauses = {0:{CLAUSE: set([-111, -112]), BOOL: False,LITERALS:[111,112]}, 1:{CLAUSE: set([111, 112]), BOOL: False,LITERALS:[111,112]}}

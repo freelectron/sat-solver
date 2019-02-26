@@ -224,7 +224,7 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
     undo_clause_deletion(removed_clauses, changed_literals, clauses, variables)
     return INCONSISTENT
 
-def SAT_solver(variables, clauses, version=PT, moms=False):
+def SAT_solver(variables, clauses, version=PT, moms=False,chronological=False):
     """ """
     # first check for tautologies
     for k, c in list(clauses.items()):
@@ -253,7 +253,7 @@ def SAT_solver(variables, clauses, version=PT, moms=False):
         # print('# of clauses satisfied per split: ', len(global_sat_clauses))
 
     elif version is 1:
-        success, splits, list_sat_clauses = cdcl(clauses, variables, moms=moms)
+        success, splits, list_sat_clauses = cdcl(clauses, variables, moms=moms,chronological=chronological)
 
     # # determines if it is inconsistent
     # if correct is INCONSISTENT:
