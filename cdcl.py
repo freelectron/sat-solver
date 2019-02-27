@@ -255,7 +255,7 @@ def recursive_cdcl(data_pack, depth=0, moms=False):
 
                         if success is INCONSISTENT:
                             # try the next run
-                            if depth == backtrack:
+                            if depth <= backtrack:
                                 continue
 
                             data_pack[SPLITS].remove(key)

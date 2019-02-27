@@ -243,7 +243,7 @@ def SAT_solver(variables, clauses, version=PT, moms=False,chronological=False):
     global_sat_clauses = []
 
     # Init variables that will store the output
-    splits = None
+    splits = 0
 
     list_sat_clauses = None
 
@@ -251,7 +251,7 @@ def SAT_solver(variables, clauses, version=PT, moms=False,chronological=False):
         correct = recursive_SAT_solver(clauses, variables, moms=moms)
         # print("sat splits:", len(global_sat_splits))
         # print('# of clauses satisfied per split: ', len(global_sat_clauses))
-
+        splits = len(global_sat_splits)
     elif version is 1:
         success, splits, list_sat_clauses = cdcl(clauses, variables, moms=moms,chronological=chronological)
 
@@ -266,8 +266,6 @@ def SAT_solver(variables, clauses, version=PT, moms=False,chronological=False):
         if v[BOOL]:
             t += f"{k} 0\n"
 
-    splits = splits or global_sat_splits
-    
     list_sat_clauses = list_sat_clauses or global_sat_clauses
 
 
