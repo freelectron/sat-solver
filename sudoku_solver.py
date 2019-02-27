@@ -45,7 +45,7 @@ def print_sudoku(dimacs):
     print(image)
 
 
-def test_func(data_name="1000 sudokus"):
+def test_func(data_name="testsudoku"):
     rules = open("sudoku-rules.txt")
     rules = "\n".join(rules.read().split("\n")[1:])
     sudoku = open(data_name + ".txt")
@@ -85,7 +85,6 @@ def test_func(data_name="1000 sudokus"):
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
         cdcl_correct, cdcl_final, cdcl_splits, cdcl_list_sat_clauses = \
             SAT_solver(variables, clauses, 1, moms=False)
-        # print_sudoku(cdcl_final)
 
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
         cdcl_moms_correct, cdcl_moms_final, cdcl_moms_splits, cdcl_moms_list_sat_clauses = \
@@ -93,11 +92,15 @@ def test_func(data_name="1000 sudokus"):
 
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
         cdcl_chron_correct, cdcl_chron_final, cdcl_chron_splits, cdcl_chron_list_sat_clauses = \
-            SAT_solver(variables, clauses, 1, moms=True, chronological=True)
+            SAT_solver(variables, clauses, 1, moms=False, chronological=True)
 
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
         cdcl_chron_moms_correct, cdcl_chron_moms_final, cdcl_chron_moms_splits, cdcl_chron_moms_list_sat_clauses = \
             SAT_solver(variables, clauses, 1, moms=True, chronological=True)
+
+        # print_sudoku(cdcl_final)
+        # print_sudoku(cdcl_chron_final)
+        # print_sudoku(cdcl_chron_moms_final)
 
         DP_splits_list.append(DP_splits)
         DP_moms_splits_list.append(DP_moms_splits)
@@ -117,8 +120,8 @@ def test_func(data_name="1000 sudokus"):
 
         # TODO: make cdcl_notchronological and moms
 
-        # if c > 10:
-        #     break
+        if c > 10:
+            break
 
     data = {'DP_splits': DP_splits_list,
             'DP_moms_splits': DP_moms_splits_list,

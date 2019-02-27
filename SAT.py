@@ -23,9 +23,9 @@ def dimacs_to_datastructures(dimacs):
             var = abs(int(var))
             list_of_vars.append(var)
             if not var in variables:
-                variables[var] = {CLAUSE_INDEX: [],UNSAT_CLAUES_IDX:[], BOOL: UNDEFINED, UNIT_CLAUSE: None,SPLITTED:False}
+                variables[var] = {CLAUSE_INDEX: [], UNSAT_CLAUSES_IDX:[], BOOL: UNDEFINED, UNIT_CLAUSE: None, SPLITTED:False}
             variables[var][CLAUSE_INDEX].append(idx)
-            variables[var][UNSAT_CLAUES_IDX].append(idx)
+            variables[var][UNSAT_CLAUSES_IDX].append(idx)
 
 
         clauses[idx] = {CLAUSE: set([int(c) for c in clause]) , BOOL: False, TAUTOLOGY: False, LITERALS: list_of_vars}
@@ -160,6 +160,32 @@ def check_sat_clauses(clauses):
     return sat_clauses
 
 
+def moms_search(clauses,variabeles, k=2):
+    # print("moms sat")
+    max_f_score = 0
+    best_var = None
+    best_key = None
+    for key, var in variabeles.items():
+        min_size = sys.maxsize
+        occurences = 0
+        if not var[BOOL] == UNDEFINED:
+            continue
+
+        for clause_key in var[CLAUSE_INDEX]:
+            clause = clauses[clause_key]
+            if len(clause[LITERALS]) < min_size:
+                min_size = len(clause[LITERALS])
+            if min_size == len(clause[LITERALS]):
+                occurences += 1
+        first_term = occurences + len(clauses) - len(var[CLAUSE_INDEX])
+        f_score = first_term * (2 ** k) + occurences * (len(clauses) - len(var[CLAUSE_INDEX]))
+        if f_score > max_f_score:
+            best_var = var
+            best_key = key
+            f_score = max_f_score
+    return best_key, best_var
+
+
 def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
     """
     All changed literals and clauses will be stored
@@ -202,27 +228,24 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
                 return INCONSISTENT
     else:
         # We need to make a split based on moms heuristic
-        moms_variables = sorted(variables.items(), key=lambda kv: len(kv[1][CLAUSE_INDEX]))
-        for k,_ in moms_variables:  # variables.keys():
-            if variables[k][BOOL] == UNDEFINED:
-                changed_literals.append(k)
-                for b in [True, False]:
-                    # global global_sat_splits
-                    global_sat_splits.append(1)
-                    variables[k][BOOL] = b
-                    # print(depth)
-                    # global global_sat_clauses
-                    success = recursive_SAT_solver(clauses, variables, depth + 1, moms=moms)
-                    if success is INCONSISTENT:
-                        continue
-                    else:
-                        return True
-                # noinspection PyUnreachableCode
-                undo_clause_deletion(removed_clauses, changed_literals, clauses, variables)
-                return INCONSISTENT
+        key,var = moms_search(clauses,variables)
+        changed_literals.append(key)
+        for b in [True, False]:
+            # global global_sat_splits
+            global_sat_splits.append(1)
+            variables[key][BOOL] = b
+            # print(depth)
+            # global global_sat_clauses
+            success = recursive_SAT_solver(clauses, variables, depth + 1, moms=moms)
+            if success is INCONSISTENT:
+                continue
+            else:
+                return True
+        # noinspection PyUnreachableCode
+        undo_clause_deletion(removed_clauses, changed_literals, clauses, variables)
+        return INCONSISTENT
 
-    undo_clause_deletion(removed_clauses, changed_literals, clauses, variables)
-    return INCONSISTENT
+
 
 def SAT_solver(variables, clauses, version=PT, moms=False,chronological=False):
     """ """

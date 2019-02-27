@@ -10,5 +10,13 @@ UNDEFINED = None
 INCONSISTENT = "inconsistent"
 LITERALS = "literals"
 SPLITTED = "splitted"
-UNSAT_CLAUES_IDX = "unsat_clauses"
+UNSAT_CLAUSES_IDX = "unsat_clauses_idx"
 SAT_SPLITS = "satsplits"
+
+CLAUSES = "clauses"
+VARIABLES = "variables"
+UNSAT_VARIABLES = "unsat_variables"
+IMPLICATIONS = "implications"
+UNSAT_CLAUSES = "unsat_clauses"
+SPLITS = "splits"
+DEPTH = 'depth'
