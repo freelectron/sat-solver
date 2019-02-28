@@ -46,10 +46,13 @@ def print_sudoku(dimacs):
         print(image)
 
 
-def test_func(data_name="sudokus_16x16", rules_name="sudoku_rules_16x16"):
+def test_func(data_name="sudokus_9x9", rules_name="sudoku_rules_9x9"):
     rules = open(rules_name + ".txt")
     rules = "\n".join(rules.read().split("\n")[1:])
     sudoku = open(data_name + ".txt")
+
+    from time import time
+    t0 = time()
 
     DP_splits_list = list()
     DP_list_sat_clauses_list = list()
@@ -137,8 +140,10 @@ def test_func(data_name="sudokus_16x16", rules_name="sudoku_rules_16x16"):
             'cdcl_chron_moms_list_sat_clauses': cdcl_chron_moms_list_sat_clauses_list,
             }
 
+    print('it took %2d seconds' % (time() - t0))
+
     df = pd.DataFrame(data=data)
     df.to_csv('df' + "_" + data_name + '.csv')
 
-
-test_func()
+if __name__ == '__main__':
+    test_func()

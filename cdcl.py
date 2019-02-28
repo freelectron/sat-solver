@@ -201,7 +201,7 @@ def find_conflict(clause_key, data_pack):
             split_depth = data_pack[SPLITS].index(var)
             if lowest_var >split_depth:
                 lowest_var = split_depth
-    print("backtrack",lowest_var)
+     #print("backtrack",lowest_var)
     return lowest_var
 
 
@@ -322,7 +322,7 @@ def recursive_cdcl(data_pack, depth=0, moms=False):
                     backtrack = None
                     data_pack[SPLITS].append(key)
                     for b in [True,False]:
-                        print("cdcl in ",depth)
+                        #print("cdcl in ",depth)
                         var[BOOL] = b
                         data_pack[SAT_SPLITS] = data_pack[SAT_SPLITS] + 1
 
@@ -330,7 +330,7 @@ def recursive_cdcl(data_pack, depth=0, moms=False):
                         data_pack[DEPTH] += 1
                         success, backtrack = recursive_cdcl(data_pack, depth + 1)
                         data_pack[DEPTH] -= 1
-                        print("cdcl out ",depth)
+                        #print("cdcl out ",depth)
 
                         if success is INCONSISTENT:
                             # try the next run

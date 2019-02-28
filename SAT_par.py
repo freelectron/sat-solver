@@ -1,7 +1,7 @@
 from SAT import *
 from collections import defaultdict
 import pandas as pd
-
+import multiprocessing as mp
 
 def create_sudoku(sudokuname="testsudoku.txt", rules_name="sudoku_rules_4x4"):
     rules = open(rules_name+".txt")
@@ -46,10 +46,13 @@ def print_sudoku(dimacs):
         print(image)
 
 
-def test_func(data_name="sudokus_16x16", rules_name="sudoku_rules_16x16"):
+def test_func(data_name="sudokus_9x9", rules_name="sudoku_rules_9x9"):
     rules = open(rules_name + ".txt")
     rules = "\n".join(rules.read().split("\n")[1:])
     sudoku = open(data_name + ".txt")
+
+    from time import time
+    t0 = time()
 
     DP_splits_list = list()
     DP_list_sat_clauses_list = list()
@@ -68,15 +71,12 @@ def test_func(data_name="sudokus_16x16", rules_name="sudoku_rules_16x16"):
     sudoku_clauses_list = list()
 
 
-    # Try out parallel
-    import multiprocessing as mp
 
     c = 0
     for line in sudoku.read().split("\n"):
         if not line: continue
         c += 1
         print(c)
-
         sudoku_dimacs = parse_sudoku_to_dimacs(line, False)
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
 
@@ -87,8 +87,9 @@ def test_func(data_name="sudokus_16x16", rules_name="sudoku_rules_16x16"):
         arg_list = [(variables, clauses, 0, False, False, output_que, 0),
                     (variables, clauses, 0, True, False, output_que, 1),
                     (variables, clauses, 1, False, False, output_que, 2),
-                    (variables, clauses, 1, True, False, output_que, 3)]
-
+                    (variables, clauses, 1, True, False, output_que, 3),
+                    (variables, clauses, 1, False, True, output_que, 4),
+                    (variables, clauses, 1, True, True, output_que, 5)]
 
         # Setup a list of processes that we want to run
         processes = [mp.Process(target=SAT_solver, args=arg_tup) for arg_tup in arg_list]
@@ -97,130 +98,71 @@ def test_func(data_name="sudokus_16x16", rules_name="sudoku_rules_16x16"):
         for p in processes:
             p.start()
 
-
-        print('join')
-
         # Exit the completed processes
         for p in processes:
             p.join()
 
         # Get process results from the output queue
         results = [output_que.get() for p in processes]
-        # DP_correct, DP_final, DP_splits, DP_list_sat_clauses = results[0]
-
-        print(results)
-
 
         #results are retrurned in the order of faster completion
         for result in results:
             if result[-1] == 0:
-                print('dp done')
                 DP_correct, DP_final, DP_splits, DP_list_sat_clauses, _ = result
             elif result[-1] == 1:
-                print('dp moms done')
-                DP_moms_correct, DP_moms_final, DP_moms_splits, DP_moms_list_sat_clauses = results
+                DP_moms_correct, DP_moms_final, DP_moms_splits, DP_moms_list_sat_clauses, _ = result
             elif result[-1] == 2:
-                print('cdcl done')
                 cdcl_correct, cdcl_final, cdcl_splits, cdcl_list_sat_clauses, _ = result
             elif result[-1] == 3:
-                cdcl_moms_correct, cdcl_moms_final, cdcl_moms_splits, cdcl_moms_list_sat_clauses = results
-
-        #
-        # variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        # DP_correct, DP_final, DP_splits, DP_list_sat_clauses = \
-        #     SAT_solver(variables, clauses, 0, moms=False)
-        #
-        # variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        # DP_moms_correct, DP_moms_final, DP_moms_splits, DP_moms_list_sat_clauses = \
-        #     SAT_solver(variables, clauses, 0, moms=True)
-        #
-        # variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        # cdcl_correct, cdcl_final, cdcl_splits, cdcl_list_sat_clauses = \
-        #     SAT_solver(variables, clauses, 1, moms=False)
-        #
-        # variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        # cdcl_moms_correct, cdcl_moms_final, cdcl_moms_splits, cdcl_moms_list_sat_clauses = \
-        #     SAT_solver(variables, clauses, 1, moms=True)
-        #
-
-        #### ------ chron ----
-        # variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        # cdcl_chron_correct, cdcl_chron_final, cdcl_chron_splits, cdcl_chron_list_sat_clauses = \
-        #     SAT_solver(variables, clauses, 1, moms=False, chronological=True)
-        #
-        # variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        # cdcl_chron_moms_correct, cdcl_chron_moms_final, cdcl_chron_moms_splits, cdcl_chron_moms_list_sat_clauses = \
-        #     SAT_solver(variables, clauses, 1, moms=True, chronological=True)
-        #### -----------------
+                cdcl_moms_correct, cdcl_moms_final, cdcl_moms_splits, cdcl_moms_list_sat_clauses, _ = result
+            elif result[-1] == 4:
+                cdcl_chron_correct, cdcl_chron_final, cdcl_chron_splits, cdcl_chron_list_sat_clauses, _ = result
+            else:
+                cdcl_chron_moms_correct, cdcl_chron_moms_final, cdcl_chron_moms_splits, \
+                cdcl_chron_moms_list_sat_clauses, _ = result
 
         DP_splits_list.append(DP_splits)
         DP_moms_splits_list.append(DP_moms_splits)
         cdcl_splits_list.append(cdcl_splits)
         cdcl_moms_splits_list.append(cdcl_moms_splits)
-        # cdcl_chron_splits_list.append(cdcl_chron_splits)
-        # cdcl_chron_moms_splits_list.append(cdcl_chron_moms_splits)
+        cdcl_chron_splits_list.append(cdcl_chron_splits)
+        cdcl_chron_moms_splits_list.append(cdcl_chron_moms_splits)
 
         DP_list_sat_clauses_list.append(DP_list_sat_clauses)
         DP_moms_list_sat_clauses_list.append(DP_moms_list_sat_clauses)
         cdcl_list_sat_clauses_list.append(cdcl_list_sat_clauses)
         cdcl_moms_list_sat_clauses_list.append(cdcl_moms_list_sat_clauses)
-        # cdcl_chron_list_sat_clauses_list.append(cdcl_chron_list_sat_clauses)
-        # cdcl_chron_moms_list_sat_clauses_list.append(cdcl_chron_moms_list_sat_clauses)
+        cdcl_chron_list_sat_clauses_list.append(cdcl_chron_list_sat_clauses)
+        cdcl_chron_moms_list_sat_clauses_list.append(cdcl_chron_moms_list_sat_clauses)
 
         sudoku_clauses_list.append(len(sudoku_dimacs.split('\n')) - 1)
+
+        if c>10:
+            break
 
     data = {'DP_splits': DP_splits_list,
             'DP_moms_splits': DP_moms_splits_list,
             'cdcl_splits': cdcl_splits_list,
             'cdcl_moms_splits': cdcl_moms_splits_list,
             'cdcl_chron_splits': cdcl_chron_splits_list,
-            # 'cdcl_chron_moms_splits': cdcl_chron_moms_splits_list,
-            # 'sudoku_given_clauses': sudoku_clauses_list,
+            'cdcl_chron_moms_splits': cdcl_chron_moms_splits_list,
+            'sudoku_given_clauses': sudoku_clauses_list,
 
             'DP_list_sat_clauses': DP_list_sat_clauses_list,
             'DP_moms_list_sat_clauses': DP_moms_list_sat_clauses_list,
             'cdcl_list_sat_clauses': cdcl_list_sat_clauses_list,
-            'cdcl_moms_list_sat_clauses': cdcl_moms_list_sat_clauses_list  #,
-            # 'cdcl_chron_list_sat_clauses': cdcl_chron_list_sat_clauses_list,
-            # 'cdcl_chron_moms_list_sat_clauses': cdcl_chron_moms_list_sat_clauses_list,
+            'cdcl_moms_list_sat_clauses': cdcl_moms_list_sat_clauses_list ,
+            'cdcl_chron_list_sat_clauses': cdcl_chron_list_sat_clauses_list,
+            'cdcl_chron_moms_list_sat_clauses': cdcl_chron_moms_list_sat_clauses_list
             }
+
+
+    print('it took %2d seconds' % (time() - t0))
 
     df = pd.DataFrame(data=data)
     df.to_csv('df' + "_" + data_name + '_par.csv')
 
 
-test_func()
-# import multiprocessing as mp
-# import random
-# import string
-#
-# random.seed(123)
-#
-# # Define an output queue
-# output = mp.Queue()
-#
-# # define a example function
-# def rand_string(length, output):
-#     """ Generates a random string of numbers, lower- and uppercase chars. """
-#     rand_str = ''.join(random.choice(
-#                         string.ascii_lowercase
-#                         + string.ascii_uppercase
-#                         + string.digits)
-#                    for i in range(length))
-#     output.put(rand_str)
-#
-# # Setup a list of processes that we want to run
-# processes = [mp.Process(target=rand_string, args=(5, output)) for x in range(4)]
-#
-# # Run processes
-# for p in processes:
-#     p.start()
-#
-# # Exit the completed processes
-# for p in processes:
-#     p.join()
-#
-# # Get process results from the output queue
-# results = [output.get() for p in processes]
-#
-# print(results)
+
+if __name__ == '__main__':
+    test_func()
