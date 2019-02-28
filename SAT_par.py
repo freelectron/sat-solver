@@ -137,8 +137,6 @@ def test_func(data_name="sudokus_9x9", rules_name="sudoku_rules_9x9"):
 
         sudoku_clauses_list.append(len(sudoku_dimacs.split('\n')) - 1)
 
-        if c>10:
-            break
 
     data = {'DP_splits': DP_splits_list,
             'DP_moms_splits': DP_moms_splits_list,
