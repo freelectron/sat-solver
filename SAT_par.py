@@ -46,7 +46,7 @@ def print_sudoku(dimacs):
         print(image)
 
 
-def test_func(data_name="1003_16x16", rules_name="sudoku_rules_16x16"):
+def test_func(data_name="sudokus_16x16", rules_name="sudoku_rules_16x16"):
     rules = open(rules_name + ".txt")
     rules = "\n".join(rules.read().split("\n")[1:])
     sudoku = open(data_name + ".txt")
