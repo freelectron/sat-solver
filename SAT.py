@@ -160,25 +160,32 @@ def check_sat_clauses(clauses):
     return sat_clauses
 
 
-def moms_search(clauses,variabeles, k=2):
+def moms_search(clauses,variabeles, k=3):
     # print("moms sat")
+    minimal_size = sys.maxsize
+    for c in clauses.values():
+        if len(c[CLAUSE])<minimal_size:
+            minimal_size = len(c[CLAUSE])
+
     max_f_score = 0
     best_var = None
     best_key = None
     for key, var in variabeles.items():
-        min_size = sys.maxsize
-        occurences = 0
+        occurences_pos = 0
+        occurences_neg = 0
         if not var[BOOL] == UNDEFINED:
             continue
 
         for clause_key in var[CLAUSE_INDEX]:
             clause = clauses[clause_key]
-            if len(clause[LITERALS]) < min_size:
-                min_size = len(clause[LITERALS])
-            if min_size == len(clause[LITERALS]):
-                occurences += 1
-        first_term = occurences + len(clauses) - len(var[CLAUSE_INDEX])
-        f_score = first_term * (2 ** k) + occurences * (len(clauses) - len(var[CLAUSE_INDEX]))
+            if minimal_size == len(clause[CLAUSE]):
+                if key in clause[CLAUSE]:
+                    occurences_pos += 1
+                else:
+                    occurences_neg += 1
+
+        first_term = occurences_pos + occurences_neg
+        f_score = first_term * (2 ** k) + occurences_pos * occurences_neg
         if f_score > max_f_score:
             best_var = var
             best_key = key

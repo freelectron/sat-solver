@@ -215,27 +215,35 @@ def undo_clause_deletion(changed_literals, removed_clauses, data_pack):
         data_pack[VARIABLES][lit][BOOL] = UNDEFINED
 
 
-def moms_search(data_pack,k=4):
+def moms_search(data_pack,k=3):
+
+
     max_f_score = 0
     best_var = None
     best_key = None
-    # print("moms")
+    minimal_size = sys.maxsize
+    for clause_key in data_pack[UNSAT_CLAUSES]:
+        c = data_pack[CLAUSES][clause_key][CLAUSE]
+        if len(c)<minimal_size:
+            minimal_size = len(c)
+
+
     for key, var in data_pack[VARIABLES].items():
-        min_size = sys.maxsize
-        occurences = 0
+        occurences_pos = 0
+        occurences_neg = 0
         if not var[BOOL] == UNDEFINED:
             continue
 
         for clause_key in var[UNSAT_CLAUSES_IDX]:
             clause = data_pack[CLAUSES][clause_key]
+            if minimal_size == len(clause[CLAUSE]):
+                if key in clause[CLAUSE]:
+                    occurences_pos+=1
+                else:
+                    occurences_neg+=1
 
-            if len(clause[LITERALS])<min_size:
-                min_size = len(clause[LITERALS])
-            if min_size == len(clause[LITERALS]):
-                occurences+=1
-
-        first_term = occurences + len(data_pack[UNSAT_CLAUSES]) - len(var[UNSAT_CLAUSES_IDX])
-        f_score = first_term*(2**k) + occurences*(len(data_pack[UNSAT_CLAUSES]) - len(var[UNSAT_CLAUSES_IDX]))
+        first_term = occurences_pos + occurences_neg
+        f_score = first_term*(2**k) + occurences_pos*occurences_neg
         if f_score>max_f_score:
             best_var = var
             best_key = key
