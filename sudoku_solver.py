@@ -1,5 +1,6 @@
 from SAT import *
 from collections import defaultdict
+import pandas as pd
 
 
 def create_sudoku(sudokuname="testsudoku.txt", rules_name="sudoku_rules_4x4"):
@@ -45,11 +46,10 @@ def print_sudoku(dimacs):
         print(image)
 
 
-def test_func(data_name="1060_4x4", rules_name="sudoku_rules_4x4"):
+def test_func(data_name="1022_9x9", rules_name="sudoku_rules_9x9"):
     rules = open(rules_name + ".txt")
     rules = "\n".join(rules.read().split("\n")[1:])
     sudoku = open(data_name + ".txt")
-    import pandas as pd
 
     DP_splits_list = list()
     DP_list_sat_clauses_list = list()
@@ -75,27 +75,27 @@ def test_func(data_name="1060_4x4", rules_name="sudoku_rules_4x4"):
         sudoku_dimacs = parse_sudoku_to_dimacs(line, False)
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
 
-        DP_correct, DP_final, DP_splits, DP_list_sat_clauses = \
+        DP_correct, DP_final, DP_splits, DP_list_sat_clauses, _ = \
             SAT_solver(variables, clauses, 0, moms=False)
 
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        DP_moms_correct, DP_moms_final, DP_moms_splits, DP_moms_list_sat_clauses = \
+        DP_moms_correct, DP_moms_final, DP_moms_splits, DP_moms_list_sat_clauses, _ = \
             SAT_solver(variables, clauses, 0, moms=True)
 
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        cdcl_correct, cdcl_final, cdcl_splits, cdcl_list_sat_clauses = \
+        cdcl_correct, cdcl_final, cdcl_splits, cdcl_list_sat_clauses, _ = \
             SAT_solver(variables, clauses, 1, moms=False)
 
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        cdcl_moms_correct, cdcl_moms_final, cdcl_moms_splits, cdcl_moms_list_sat_clauses = \
+        cdcl_moms_correct, cdcl_moms_final, cdcl_moms_splits, cdcl_moms_list_sat_clauses, _ = \
             SAT_solver(variables, clauses, 1, moms=True)
 
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        cdcl_chron_correct, cdcl_chron_final, cdcl_chron_splits, cdcl_chron_list_sat_clauses = \
+        cdcl_chron_correct, cdcl_chron_final, cdcl_chron_splits, cdcl_chron_list_sat_clauses, _= \
             SAT_solver(variables, clauses, 1, moms=False, chronological=True)
 
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        cdcl_chron_moms_correct, cdcl_chron_moms_final, cdcl_chron_moms_splits, cdcl_chron_moms_list_sat_clauses = \
+        cdcl_chron_moms_correct, cdcl_chron_moms_final, cdcl_chron_moms_splits, cdcl_chron_moms_list_sat_clauses, _ = \
             SAT_solver(variables, clauses, 1, moms=True, chronological=True)
 
         # print_sudoku(cdcl_final)
@@ -117,6 +117,9 @@ def test_func(data_name="1060_4x4", rules_name="sudoku_rules_4x4"):
         cdcl_chron_moms_list_sat_clauses_list.append(cdcl_chron_moms_list_sat_clauses)
 
         sudoku_clauses_list.append(len(sudoku_dimacs.split('\n')) - 1)
+
+        if c>10:
+            break
 
     data = {'DP_splits': DP_splits_list,
             'DP_moms_splits': DP_moms_splits_list,

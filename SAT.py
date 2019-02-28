@@ -254,7 +254,7 @@ def recursive_SAT_solver(clauses, variables, depth=0, moms=False):
 
 
 
-def SAT_solver(variables, clauses, version=PT, moms=False,chronological=False):
+def SAT_solver(variables, clauses, version=PT, moms=False,chronological=False, output_que=None, pos=None):
     """ """
     # first check for tautologies
     for k, c in list(clauses.items()):
@@ -298,8 +298,10 @@ def SAT_solver(variables, clauses, version=PT, moms=False,chronological=False):
 
     list_sat_clauses = list_sat_clauses or global_sat_clauses
 
-
-    return correct, t, splits, list_sat_clauses
+    if output_que is not None:
+        output_que.put(correct, t, splits, list_sat_clauses, pos)
+    else:
+        return correct, t, splits, list_sat_clauses, pos
 
 
 
