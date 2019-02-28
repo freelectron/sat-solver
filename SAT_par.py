@@ -80,14 +80,15 @@ def test_func(data_name="1003_16x16", rules_name="sudoku_rules_16x16"):
         sudoku_dimacs = parse_sudoku_to_dimacs(line, False)
         variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
 
+        # define an output que
+        output_que = mp.Queue()
+
         # SAT_solver(variables, clauses, version=PT, moms=False,chronological=False, output_que=None)
         arg_list = [(variables, clauses, 0, False, False, output_que, 0),
                     (variables, clauses, 0, True, False, output_que, 1),
                     (variables, clauses, 1, False, False, output_que, 2),
                     (variables, clauses, 1, True, False, output_que, 3)]
 
-        # define an output que
-        output_que = mp.Queue()
 
         # Setup a list of processes that we want to run
         processes = [mp.Process(target=SAT_solver, args=arg_tup) for arg_tup in arg_list]
@@ -96,22 +97,32 @@ def test_func(data_name="1003_16x16", rules_name="sudoku_rules_16x16"):
         for p in processes:
             p.start()
 
+
+        print('join')
+
         # Exit the completed processes
         for p in processes:
             p.join()
 
         # Get process results from the output queue
         results = [output_que.get() for p in processes]
-        DP_correct, DP_final, DP_splits, DP_list_sat_clauses = results[0]
+        # DP_correct, DP_final, DP_splits, DP_list_sat_clauses = results[0]
 
+        print(results)
+
+
+        #results are retrurned in the order of faster completion
         for result in results:
-            if results[-1] == 0:
-                DP_correct, DP_final, DP_splits, DP_list_sat_clauses = result
-            elif results[-1] == 1:
+            if result[-1] == 0:
+                print('dp done')
+                DP_correct, DP_final, DP_splits, DP_list_sat_clauses, _ = result
+            elif result[-1] == 1:
+                print('dp moms done')
                 DP_moms_correct, DP_moms_final, DP_moms_splits, DP_moms_list_sat_clauses = results
-            elif results[-1] == 2:
-                cdcl_correct, cdcl_final, cdcl_splits, cdcl_list_sat_clauses = result
-            elif results[-1] == 3:
+            elif result[-1] == 2:
+                print('cdcl done')
+                cdcl_correct, cdcl_final, cdcl_splits, cdcl_list_sat_clauses, _ = result
+            elif result[-1] == 3:
                 cdcl_moms_correct, cdcl_moms_final, cdcl_moms_splits, cdcl_moms_list_sat_clauses = results
 
         #
@@ -179,3 +190,37 @@ def test_func(data_name="1003_16x16", rules_name="sudoku_rules_16x16"):
 
 
 test_func()
+# import multiprocessing as mp
+# import random
+# import string
+#
+# random.seed(123)
+#
+# # Define an output queue
+# output = mp.Queue()
+#
+# # define a example function
+# def rand_string(length, output):
+#     """ Generates a random string of numbers, lower- and uppercase chars. """
+#     rand_str = ''.join(random.choice(
+#                         string.ascii_lowercase
+#                         + string.ascii_uppercase
+#                         + string.digits)
+#                    for i in range(length))
+#     output.put(rand_str)
+#
+# # Setup a list of processes that we want to run
+# processes = [mp.Process(target=rand_string, args=(5, output)) for x in range(4)]
+#
+# # Run processes
+# for p in processes:
+#     p.start()
+#
+# # Exit the completed processes
+# for p in processes:
+#     p.join()
+#
+# # Get process results from the output queue
+# results = [output.get() for p in processes]
+#
+# print(results)

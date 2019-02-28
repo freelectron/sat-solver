@@ -299,7 +299,7 @@ def SAT_solver(variables, clauses, version=PT, moms=False,chronological=False, o
     list_sat_clauses = list_sat_clauses or global_sat_clauses
 
     if output_que is not None:
-        output_que.put(correct, t, splits, list_sat_clauses, pos)
+        output_que.put((correct, t, splits, list_sat_clauses, pos))
     else:
         return correct, t, splits, list_sat_clauses, pos
 
