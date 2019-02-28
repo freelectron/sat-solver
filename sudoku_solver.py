@@ -2,8 +2,8 @@ from SAT import *
 from collections import defaultdict
 
 
-def create_sudoku(sudokuname="testsudoku.txt"):
-    rules = open("sudoku-rules.txt")
+def create_sudoku(sudokuname="testsudoku.txt", rules_name="sudoku_rules_4x4"):
+    rules = open(rules_name+".txt")
     rules = "\n".join(rules.read().split("\n")[1:])
     sudoku = open(sudokuname).read()
     sudoku_dimacs = parse_sudoku_to_dimacs(sudoku)
@@ -36,17 +36,17 @@ def print_sudoku(dimacs):
         for col in range(1, 10):
             if (col - 1) % 3 == 0: image += '|'
             if row * 10 + col in d:
-                image += f" {d[row * 10 + col]} "
+                    image += f" {d[row * 10 + col]} "
             else:
-                image += '   '
-        image += '|\n'
-        if row % 3 == 0: image += "-" * 31 + "\n"
+                    image += '   '
+            image += '|\n'
+            if row % 3 == 0: image += "-" * 31 + "\n"
 
-    print(image)
+        print(image)
 
 
-def test_func(data_name="1000 sudokus"):
-    rules = open("sudoku-rules.txt")
+def test_func(data_name="1060_4x4", rules_name="sudoku_rules_4x4"):
+    rules = open(rules_name + ".txt")
     rules = "\n".join(rules.read().split("\n")[1:])
     sudoku = open(data_name + ".txt")
     import pandas as pd
@@ -118,11 +118,6 @@ def test_func(data_name="1000 sudokus"):
 
         sudoku_clauses_list.append(len(sudoku_dimacs.split('\n')) - 1)
 
-        # TODO: make cdcl_notchronological and moms
-
-        if c > 10:
-            break
-
     data = {'DP_splits': DP_splits_list,
             'DP_moms_splits': DP_moms_splits_list,
             'cdcl_splits': cdcl_splits_list,
@@ -139,8 +134,8 @@ def test_func(data_name="1000 sudokus"):
             'cdcl_chron_moms_list_sat_clauses': cdcl_chron_moms_list_sat_clauses_list,
             }
 
-    df_9by9 = pd.DataFrame(data=data)
-    df_9by9.to_csv(data_name + '_9x9.csv')
+    df = pd.DataFrame(data=data)
+    df.to_csv('df' + "_" + data_name + '.csv')
 
 
 test_func()
