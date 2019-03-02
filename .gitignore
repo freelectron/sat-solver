@@ -3,4 +3,4 @@ __pycache__
 venv/
 
 #dont track ipynb cache
-.ipynb_checkpoints/
+*/.ipynb_checkpoints/*.ipynb
