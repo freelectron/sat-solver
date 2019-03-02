@@ -1,7 +1,11 @@
-from SAT import *
+import os
+import multiprocessing as mp
+from time import time
+
+from dp_wrapper import *
 from collections import defaultdict
 import pandas as pd
-import multiprocessing as mp
+
 
 def create_sudoku(sudokuname="testsudoku.txt", rules_name="sudoku_rules_4x4"):
     rules = open(rules_name+".txt")
@@ -46,12 +50,12 @@ def print_sudoku(dimacs):
         print(image)
 
 
-def test_func(data_name="sudokus_9x9", rules_name="sudoku_rules_9x9"):
-    rules = open(rules_name + ".txt")
+def test_func(data_name="sudokus_9x9", rules_name="9x9"):
+    rules_path = os.path.join('rules', "sudoku_rules_" + rules_name + ".txt")
+    rules = open(rules_path)
     rules = "\n".join(rules.read().split("\n")[1:])
     sudoku = open(data_name + ".txt")
 
-    from time import time
     t0 = time()
 
     DP_splits_list = list()
@@ -69,8 +73,6 @@ def test_func(data_name="sudokus_9x9", rules_name="sudoku_rules_9x9"):
     cdcl_chron_moms_list_sat_clauses_list = list()
 
     sudoku_clauses_list = list()
-
-
 
     c = 0
     for line in sudoku.read().split("\n"):
@@ -121,6 +123,9 @@ def test_func(data_name="sudokus_9x9", rules_name="sudoku_rules_9x9"):
                 cdcl_chron_moms_correct, cdcl_chron_moms_final, cdcl_chron_moms_splits, \
                 cdcl_chron_moms_list_sat_clauses, _ = result
 
+        if c>100:
+            break
+
         DP_splits_list.append(DP_splits)
         DP_moms_splits_list.append(DP_moms_splits)
         cdcl_splits_list.append(cdcl_splits)
@@ -153,7 +158,6 @@ def test_func(data_name="sudokus_9x9", rules_name="sudoku_rules_9x9"):
             'cdcl_chron_list_sat_clauses': cdcl_chron_list_sat_clauses_list,
             'cdcl_chron_moms_list_sat_clauses': cdcl_chron_moms_list_sat_clauses_list
             }
-
 
     print('it took %2d seconds' % (time() - t0))
 
