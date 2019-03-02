@@ -50,7 +50,7 @@ def print_sudoku(dimacs):
         print(image)
 
 
-def test_func(data_name="sudokus_4x4", rules_name="4x4"):
+def test_func(data_name="top870.sdk", rules_name="9x9"):
     rules_path = os.path.join('rules', "sudoku_rules_" + rules_name + ".txt")
     rules = open(rules_path)
     rules = "\n".join(rules.read().split("\n")[1:])
@@ -123,7 +123,7 @@ def test_func(data_name="sudokus_4x4", rules_name="4x4"):
                 cdcl_chron_moms_correct, cdcl_chron_moms_final, cdcl_chron_moms_splits, \
                 cdcl_chron_moms_list_sat_clauses, _ = result
 
-        # if c>100:
+        # if c>10:
         #     break
 
         DP_splits_list.append(DP_splits)
