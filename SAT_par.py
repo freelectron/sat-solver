@@ -123,8 +123,8 @@ def test_func(data_name="sudokus_9x9", rules_name="9x9"):
                 cdcl_chron_moms_correct, cdcl_chron_moms_final, cdcl_chron_moms_splits, \
                 cdcl_chron_moms_list_sat_clauses, _ = result
 
-        if c>100:
-            break
+        # if c>100:
+        #     break
 
         DP_splits_list.append(DP_splits)
         DP_moms_splits_list.append(DP_moms_splits)
