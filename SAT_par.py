@@ -50,7 +50,7 @@ def print_sudoku(dimacs):
         print(image)
 
 
-def test_func(data_name="sudokus_9x9", rules_name="9x9"):
+def test_func(data_name="sudokus_4x4", rules_name="4x4"):
     rules_path = os.path.join('rules', "sudoku_rules_" + rules_name + ".txt")
     rules = open(rules_path)
     rules = "\n".join(rules.read().split("\n")[1:])
