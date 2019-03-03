@@ -48,7 +48,7 @@ def print_sudoku(dimacs):
         print(image)
 
 
-def test_func(sys_args=None, data_name="sudokus_9x9", rules_name="9x9", ):
+def test_func(sys_args=None, ):
     t0 = time()
 
     file = open(sys_args[2])
@@ -87,9 +87,8 @@ def test_func(sys_args=None, data_name="sudokus_9x9", rules_name="9x9", ):
         print('Please specify a heuristic, either S1 , S2 ... S6')
         final = ":''("
         return
-    with open(sys_args[2].split("/")[-1]+".out","w+") as f:
+    with open(sys_args[2].split("/")[-1]+".out", "w+") as f:
         f.write(final)
-    # print_sudoku(final)
 
     print('it took %2d seconds' % (time() - t0))
 
