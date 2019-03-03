@@ -86,8 +86,10 @@ def test_func(sys_args=None, data_name="sudokus_9x9", rules_name="9x9", ):
     else:
         print('Please specify a heuristic, either S1 , S2 ... S6')
         final = ":''("
-
-    print_sudoku(final)
+        return
+    with open(sys_args[2].split("/")[-1]+".out","w+") as f:
+        f.write(final)
+    # print_sudoku(final)
 
     print('it took %2d seconds' % (time() - t0))
 

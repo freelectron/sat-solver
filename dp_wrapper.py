@@ -295,6 +295,8 @@ def SAT_solver(variables, clauses, version=PT, moms=False,chronological=False, o
     for k, v in variables.items():
         if v[BOOL]:
             t += f"{k} 0\n"
+        else:
+            t += f"-{k} 0\n"
 
     list_sat_clauses = list_sat_clauses or global_sat_clauses
 

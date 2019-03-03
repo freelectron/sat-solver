@@ -6,4 +6,4 @@
 echo "You would like to run heuristic nr $1"
 echo "Path to the input file is $2"
 
-python SAT.py $1 $2
+python3 SAT.py $1 $2 ||  python SAT.py $1 $2
