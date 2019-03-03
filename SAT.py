@@ -48,7 +48,7 @@ def print_sudoku(dimacs):
         print(image)
 
 
-def test_func(sys_args=None, ):
+def test_func(sys_args=None ):
     t0 = time()
 
     file = open(sys_args[2])
