@@ -1,9 +1,9 @@
 from dp_wrapper import *
 from collections import defaultdict
-import pandas as pd
+# import pandas as pd
 import os
 from time import time
-
+import logging
 
 def create_sudoku(sudokuname="testsudoku.txt", rules_name="sudoku_rules_4x4"):
     rules = open(rules_name+".txt")
@@ -48,100 +48,50 @@ def print_sudoku(dimacs):
         print(image)
 
 
-def test_func(data_name="sudokus_9x9", rules_name="9x9"):
-    rules_path = os.path.join('rules', "sudoku_rules_" + rules_name + ".txt")
-    rules = open(rules_path)
-    rules = "\n".join(rules.read().split("\n")[1:])
-    sudoku = open(data_name + ".txt")
-
+def test_func(sys_args=None, data_name="sudokus_9x9", rules_name="9x9", ):
     t0 = time()
 
-    DP_splits_list = list()
-    DP_list_sat_clauses_list = list()
-    DP_moms_splits_list = list()
-    DP_moms_list_sat_clauses_list = list()
-    cdcl_splits_list = list()
-    cdcl_list_sat_clauses_list = list()
-    cdcl_moms_splits_list = list()
-    cdcl_moms_list_sat_clauses_list = list()
-    cdcl_chron_splits_list = list()
-    cdcl_chron_list_sat_clauses_list = list()
+    file = open(sys_args[2])
+    rules_sudoku_dimacs = file.read()
+    file.close()
 
-    cdcl_chron_moms_splits_list = list()
-    cdcl_chron_moms_list_sat_clauses_list = list()
+    heuristic = sys_args[1]
 
-    sudoku_clauses_list = list()
+    variables, clauses = dimacs_to_datastructures(rules_sudoku_dimacs)
 
-    c = 0
-    for line in sudoku.read().split("\n"):
-        if not line: continue
-        c += 1
-        print(c)
-        sudoku_dimacs = parse_sudoku_to_dimacs(line, False)
-        variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-
-        DP_correct, DP_final, DP_splits, DP_list_sat_clauses, _ = \
+    if heuristic == '-S1':
+        print("simple DP algorithm is running.")
+        correct, final, splits, list_sat_clauses, _ = \
             SAT_solver(variables, clauses, 0, moms=False)
-
-        variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        DP_moms_correct, DP_moms_final, DP_moms_splits, DP_moms_list_sat_clauses, _ = \
+    elif heuristic == '-S2':
+        print("DP with MOMs algorithm is running.")
+        correct, final, splits, list_sat_clauses, _ = \
             SAT_solver(variables, clauses, 0, moms=True)
-
-        variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        cdcl_correct, cdcl_final, cdcl_splits, cdcl_list_sat_clauses, _ = \
+    elif heuristic == '-S3':
+        print("CDCL algorithm is running.")
+        correct, final, splits, list_sat_clauses, _= \
             SAT_solver(variables, clauses, 1, moms=False)
-
-        variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        cdcl_moms_correct, cdcl_moms_final, cdcl_moms_splits, cdcl_moms_list_sat_clauses, _ = \
+    elif heuristic == '-S4':
+        print("CDCL with MOMS algorithm is running.")
+        correct, final, splits, list_sat_clauses, _ = \
             SAT_solver(variables, clauses, 1, moms=True)
-
-        variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        cdcl_chron_correct, cdcl_chron_final, cdcl_chron_splits, cdcl_chron_list_sat_clauses, _= \
+    elif heuristic == '-S5':
+        print("CDCL Chronological algorithm is running.")
+        correct, final, splits, list_sat_clauses, _ = \
             SAT_solver(variables, clauses, 1, moms=False, chronological=True)
-
-        variables, clauses = dimacs_to_datastructures(rules + sudoku_dimacs)
-        cdcl_chron_moms_correct, cdcl_chron_moms_final, cdcl_chron_moms_splits, cdcl_chron_moms_list_sat_clauses, _ = \
+    elif heuristic == '-S6':
+        print("CDCL Chronological with MOMs algorithm is running.")
+        correct, final, splits, list_sat_clauses, _ = \
             SAT_solver(variables, clauses, 1, moms=True, chronological=True)
+    else:
+        print('Please specify a heuristic, either S1 , S2 ... S6')
+        final = ":''("
 
-        DP_splits_list.append(DP_splits)
-        DP_moms_splits_list.append(DP_moms_splits)
-        cdcl_splits_list.append(cdcl_splits)
-        cdcl_moms_splits_list.append(cdcl_moms_splits)
-        cdcl_chron_splits_list.append(cdcl_chron_splits)
-        cdcl_chron_moms_splits_list.append(cdcl_chron_moms_splits)
-
-        DP_list_sat_clauses_list.append(DP_list_sat_clauses)
-        DP_moms_list_sat_clauses_list.append(DP_moms_list_sat_clauses)
-        cdcl_list_sat_clauses_list.append(cdcl_list_sat_clauses)
-        cdcl_moms_list_sat_clauses_list.append(cdcl_moms_list_sat_clauses)
-        cdcl_chron_list_sat_clauses_list.append(cdcl_chron_list_sat_clauses)
-        cdcl_chron_moms_list_sat_clauses_list.append(cdcl_chron_moms_list_sat_clauses)
-
-        sudoku_clauses_list.append(len(sudoku_dimacs.split('\n')) - 1)
-
-        # if c>10:
-        #     break
-
-    data = {'DP_splits': DP_splits_list,
-            'DP_moms_splits': DP_moms_splits_list,
-            'cdcl_splits': cdcl_splits_list,
-            'cdcl_moms_splits': cdcl_moms_splits_list,
-            'cdcl_chron_splits': cdcl_chron_splits_list,
-            'cdcl_chron_moms_splits': cdcl_chron_moms_splits_list,
-            'sudoku_given_clauses': sudoku_clauses_list,
-
-            'DP_list_sat_clauses': DP_list_sat_clauses_list,
-            'DP_moms_list_sat_clauses': DP_moms_list_sat_clauses_list,
-            'cdcl_list_sat_clauses': cdcl_list_sat_clauses_list,
-            'cdcl_moms_list_sat_clauses': cdcl_moms_list_sat_clauses_list,
-            'cdcl_chron_list_sat_clauses': cdcl_chron_list_sat_clauses_list,
-            'cdcl_chron_moms_list_sat_clauses': cdcl_chron_moms_list_sat_clauses_list,
-            }
+    print_sudoku(final)
 
     print('it took %2d seconds' % (time() - t0))
 
-    df = pd.DataFrame(data=data)
-    df.to_csv('df' + "_" + data_name + '.csv')
-
 if __name__ == '__main__':
-    test_func()
+    logging.info("Script started...")
+    test_func(sys.argv)
+    logging.info("... script ended.")

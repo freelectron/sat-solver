@@ -4,7 +4,11 @@ Our code is written in *PYHON 3.7* we assume you have the interpreter installed.
 
 Our code does *NOT* requre any custom build packages.
 
-In order to run our solver you please type in your terminal:
+As we have six (different) heuristics we provide an option to run each of the six algorithms.
 
-	$ SAT.sh {-S1 or -S2 or-S3 -S4 or -S5 or -S6} inputfilename.txt
+*PLESE* note that the best performing heuristic is S6 (and it is not slow).
+
+In order to run our solver with either of the heuristics, you could just type in your terminal:
+
+	$ ./SAT.sh {-S1 or -S2 or-S3 -S4 or -S5 or -S6} {inputfilename.txt}
 
